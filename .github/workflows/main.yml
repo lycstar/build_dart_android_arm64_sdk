@@ -1,0 +1,43 @@
+name: Main
+on: [push]
+jobs:
+  build-dart-sdk:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 2.x
+      uses: actions/setup-python@v2
+      with:
+        python-version: '2.x'
+    - name: Prepare
+      run: |
+        sudo apt-get install g++-aarch64-linux-gnu
+        sudo apt-get install g++-multilib
+        sudo apt-get install zip
+    - name: Get Resource
+      run: |
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        export PATH="$PATH:$PWD/depot_tools"
+        mkdir dart-sdk
+        cd dart-sdk
+        fetch dart
+        cd sdk
+        git checkout 2.12.0-223.0.dev
+        cd ../
+        echo "target_os = ['android']" >> .gclient
+        gclient sync
+    - name: Build SDK
+      run: |
+        export PATH="$PATH:$PWD/depot_tools"
+        cd dart-sdk/sdk
+        ls tools/bots
+        ./tools/build.py --no-goma -m release --arch=arm64 --os=android create_sdk
+    - name: Zip SDK
+      run: |
+        cd dart-sdk/sdk
+        zip -q -r dart-sdk-android-arm64.zip out/ReleaseAndroidARM64/dart-sdk
+    - name: Release SDK
+      uses: ncipollo/release-action@v1.5.0
+      with:
+        artifacts: "dart-sdk/sdk/*.zip"
+        token: ${{ secrets.RElEASE_TOKEN }}
