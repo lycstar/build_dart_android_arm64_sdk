@@ -40,4 +40,5 @@ jobs:
       uses: ncipollo/release-action@v1.5.0
       with:
         artifacts: "dart-sdk/sdk/*.zip"
+        tag: "dev"
         token: ${{ secrets.RElEASE_TOKEN }}
