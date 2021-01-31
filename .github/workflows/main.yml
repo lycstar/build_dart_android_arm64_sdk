@@ -24,6 +24,8 @@ jobs:
         fetch dart
         cd sdk
         git checkout 2.12.0-223.0.dev
+        ls
+        sed -i “s#/data/local/tmp#/data/data/com.termux/files/home/tmp#g” runtime/bin/directory_android.cc
         cd ../
         echo "target_os = ['android']" >> .gclient
         gclient sync
