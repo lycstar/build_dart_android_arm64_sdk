@@ -1,10 +1,37 @@
 name: Main
-on: [push]
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: 0 12 * * 0
+  watch:
+    types: [started]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 jobs:
   build-dart-sdk:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Maximize build space
+      uses: easimon/maximize-build-space@v4
+      with:
+          root-reserve-mb: 512   
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
+          remove-haskell: 'true'
+          remove-android: 'true'
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Echo Free space
+      run: |
+          echo "Free space:"
+          df -h
     - name: Set up Python 2.x
       uses: actions/setup-python@v2
       with:
@@ -12,7 +39,7 @@ jobs:
     - name: Prepare
       run: |
         sudo apt-get update
-        sudo apt-get install g++-aarch64-linux-gnu
+        sudo apt-get install g++-aarch64-linux-gnu g++-arm-linux-gnueabihf
         sudo apt-get install g++-multilib
         sudo apt-get install zip
     - name: Get Resource
@@ -23,12 +50,12 @@ jobs:
         cd dart-sdk
         fetch dart
         cd sdk
-        git checkout 2.12.0-223.0.dev
+        git checkout master
         ls
         sed -i "s#/data/local/tmp#/data/data/com.termux/files/home/tmp#g" runtime/bin/directory_android.cc
         sed -n '431,433p' runtime/bin/directory_android.cc
         cd ../
-        echo "target_os = ['android']" >> .gclient
+        echo "target_os = ['android','linux']" >> .gclient
         gclient sync
     - name: Build SDK
       run: |
@@ -36,13 +63,29 @@ jobs:
         cd dart-sdk/sdk
         ls tools/bots
         ./tools/build.py --no-goma -m release --arch=arm64 --os=android create_sdk
+        ./tools/build.py --no-goma -m release --arch=arm --os=android create_sdk
+        ./tools/build.py --no-goma -m release --arch=arm64 create_sdk
+        ./tools/build.py --no-goma -m release --arch=arm create_sdk
     - name: Zip SDK
       run: |
-        cd dart-sdk/sdk
-        zip -q -r dart-sdk-android-arm64.zip out/ReleaseAndroidARM64/dart-sdk
+        cd dart-sdk/sdk/out
+        ls
+        zip -q -r dart-sdk-android-arm64.zip ReleaseAndroidARM64/dart-sdk
+        zip -q -r dart-sdk-android-arm.zip ReleaseAndroidARM/dart-sdk
+        zip -q -r dart-sdk-linux-arm64.zip ReleaseXARM64/dart-sdk
+        zip -q -r dart-sdk-linux-arm.zip ReleaseXARM/dart-sdk
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+    - name: Test with environment variables
+      run: echo $TAG_NAME - $RELEASE_TIME
+      env:
+          TAG_NAME: Dart-SDK
+          RELEASE_TIME: ${{ steps.date.outputs.date }}
     - name: Release SDK
-      uses: ncipollo/release-action@v1.5.0
+      uses: ncipollo/release-action@v1
       with:
-        artifacts: "dart-sdk/sdk/*.zip"
-        tag: "sdk"
-        token: ${{ secrets.RElEASE_TOKEN }}
+        artifacts: "dart-sdk/sdk/out/*.zip"
+        tag: Dart-SDK-${{ steps.date.outputs.date }}
+        token: ${{ secrets.RELEASE_TOKEN }}
+        allowUpdates: true
