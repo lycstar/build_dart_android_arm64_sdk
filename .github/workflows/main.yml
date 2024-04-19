@@ -59,17 +59,13 @@ jobs:
         cd dart-sdk/sdk
         ls tools/bots
         ./tools/build.py --no-goma -m release --arch=arm64 --os=android create_sdk
-        ./tools/build.py --no-goma -m release --arch=arm --os=android create_sdk
         ./tools/build.py --no-goma -m release --arch=arm64 create_sdk
-        ./tools/build.py --no-goma -m release --arch=arm create_sdk
     - name: Zip SDK
       run: |
         cd dart-sdk/sdk/out
         ls
         zip -q -r dart-sdk-android-arm64.zip ReleaseAndroidARM64/dart-sdk
-        zip -q -r dart-sdk-android-arm.zip ReleaseAndroidARM/dart-sdk
         zip -q -r dart-sdk-linux-arm64.zip ReleaseXARM64/dart-sdk
-        zip -q -r dart-sdk-linux-arm.zip ReleaseXARM/dart-sdk
     - name: Get current date
       id: date
       run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
