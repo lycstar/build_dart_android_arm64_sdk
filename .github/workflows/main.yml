@@ -13,7 +13,7 @@ on:
 
 jobs:
   build-dart-sdk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: python:2.7.18-buster
     steps:
