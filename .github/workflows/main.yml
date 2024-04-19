@@ -14,6 +14,8 @@ on:
 jobs:
   build-dart-sdk:
     runs-on: ubuntu-latest
+    container:
+      image: python:2.7.18-buster
     steps:
     - name: Maximize build space
       uses: easimon/maximize-build-space@v4
