@@ -26,9 +26,7 @@ jobs:
     - name: Prepare
       run: |
         apt-get update
-        apt-get install g++-aarch64-linux-gnu g++-arm-linux-gnueabihf
-        apt-get install g++-multilib
-        apt-get install zip
+        apt-get install -y g++-aarch64-linux-gnu g++-arm-linux-gnueabihf g++-multilib zip
     - name: Get Resource
       run: |
         git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
